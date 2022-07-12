@@ -13,10 +13,17 @@ p_load(lubridate, tidyverse, data.table, janitor,
 
 # load tracking data
 ```{r}
-n <- fread("../../../Downloads/Common noctule migration SigFox MPIAB (1).csv") %>% clean_names()
+n <- fread("../../../../Dropbox/MPI/Noctule/Data/Common noctule migration SigFox MPIAB (1).csv") %>% clean_names()
 n
 summary(n)
 ```
+# add error radius
+```{r}
+n$radius <- sapply(strsplit(n$location_accuracy_comments, split = " "), "[", 1) %>% as.numeric
+
+```
+
+
 # plot one bat and its covariates
 ```{r}
 table(n$individual_local_identifier)
@@ -27,9 +34,17 @@ table(n$individual_local_identifier)
 ids <- unique(n$individual_local_identifier)
 n1 <- n[n$individual_local_identifier == ids[4],]
 
-ggplot(n1, aes(location_long, location_lat))+
-  geom_path(aes(col = sequence_number))+
-  geom_point(aes(size = gps_dop), shape = 1, alpha = 0.2)
+
+ggplot(n1, aes(y = location_lat, x = location_long))+
+  geom_path(aes(col = timestamp))+
+  geom_point(aes(size = radius), shape = 1, alpha = 0.2)
+```
+
+### utm data is off
+```{r}
+ggplot(n1, aes(x = utm_easting, y = utm_northing))+
+  geom_path(aes(col = timestamp))+
+  geom_point(aes(size = radius), shape = 1, alpha = 0.2)
   
 ```
 
@@ -53,12 +68,19 @@ ggplot(n)+
   geom_point(aes(x = timestamp, y = temperature_max), col = 2)+
   geom_point(aes(x = timestamp, y = temperature_min), col = 4)+
   theme_minimal()+
-  facet_wrap(~individual_local_identifier) #, scales = "free")+
-  
+  facet_wrap(~individual_local_identifier)+ #, scales = "free")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 0, hjust=0))
 ```
 # distance traveled?
 ```{r}
 n$behavioural_classification %>% plot
-n$location_accuracy_comments
+
+ggplot(n)+
+  geom_point(aes(x = timestamp, y = behavioural_classification))+
+  # geom_point(aes(x = timestamp, y = temperature_min), col = 4)+
+  theme_minimal()+
+  facet_wrap(~individual_local_identifier)+ #, scales = "free")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 0, hjust=0))
 ```
+
 
